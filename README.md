@@ -1,6 +1,6 @@
 # AI Customer Support Agent
 
-A full-stack starter project for an AI customer support agent. This repository is currently at the Day 1 setup stage: project structure, frontend scaffold, backend scaffold, and basic run instructions.
+A full-stack starter project for an AI customer support agent using React, FastAPI, RAG, and tool calling concepts. This repository is currently at the Day 1 setup stage: project structure, frontend scaffold, backend scaffold, and basic run instructions.
 
 ## Day 1 Scope
 
@@ -8,37 +8,37 @@ A full-stack starter project for an AI customer support agent. This repository i
 - FastAPI backend folder
 - Basic health-check API
 - Placeholder chat UI
-- No RAG, vector database, tool calling, or agent workflow yet
+- No RAG, vector database, tool calling, or agent workflow implemented yet
 
 ## Project Structure
 
 ```text
 ai-customer-support-agent/
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   │   └── ChatWindow.tsx
-│   │   ├── App.tsx
-│   │   ├── index.css
-│   │   └── main.tsx
-│   ├── index.html
-│   ├── package.json
-│   ├── postcss.config.js
-│   ├── tailwind.config.ts
-│   ├── tsconfig.json
-│   └── vite.config.ts
-├── backend/
-│   ├── app/
-│   │   ├── api/
-│   │   ├── core/
-│   │   ├── models/
-│   │   ├── schemas/
-│   │   ├── services/
-│   │   ├── tools/
-│   │   └── main.py
-│   ├── tests/
-│   └── requirements.txt
-└── README.md
+|-- frontend/
+|   |-- src/
+|   |   |-- components/
+|   |   |   `-- ChatWindow.tsx
+|   |   |-- App.tsx
+|   |   |-- index.css
+|   |   `-- main.tsx
+|   |-- index.html
+|   |-- package.json
+|   |-- postcss.config.js
+|   |-- tailwind.config.ts
+|   |-- tsconfig.json
+|   `-- vite.config.ts
+|-- backend/
+|   |-- app/
+|   |   |-- api/
+|   |   |-- core/
+|   |   |-- models/
+|   |   |-- schemas/
+|   |   |-- services/
+|   |   |-- tools/
+|   |   `-- main.py
+|   |-- tests/
+|   `-- requirements.txt
+`-- README.md
 ```
 
 ## Frontend
