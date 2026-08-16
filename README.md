@@ -174,6 +174,15 @@ python -m pytest
 
 The backend test suite covers health checks, order lookup, product search, chat tool routing, follow-up context handling, chat history persistence, policy retrieval, support ticket creation, privacy refusal, and core intent classification.
 
+Frontend e2e tests:
+
+```bash
+npm install
+npm run test:e2e
+```
+
+The Playwright suite starts the local backend and frontend automatically and covers order lookup plus follow-up conversation behavior in the browser.
+
 ## Optional LLM Classifier
 
 The backend can optionally try an OpenAI Responses API classifier before falling back to the local rule-based classifier.
