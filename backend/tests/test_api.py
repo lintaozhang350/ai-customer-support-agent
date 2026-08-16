@@ -107,6 +107,33 @@ def test_conversations_endpoint_returns_recent_summary(client: TestClient) -> No
     assert conversations[0]["message_count"] == 2
 
 
+def test_chat_follow_up_uses_saved_order_context(client: TestClient) -> None:
+    first_response = client.post(
+        "/api/chat",
+        json={
+            "message": "Where is my order 1001?",
+            "user_id": 1,
+            "conversation_id": "follow-up-order",
+        },
+    )
+    second_response = client.post(
+        "/api/chat",
+        json={
+            "message": "When will it arrive?",
+            "user_id": 1,
+            "conversation_id": "follow-up-order",
+        },
+    )
+
+    assert first_response.status_code == 200
+    assert second_response.status_code == 200
+
+    data = second_response.json()
+    assert data["intent_result"]["intent"] == "order_status"
+    assert data["intent_result"]["entities"]["order_id"] == 1001
+    assert data["tool_used"] == "get_order_status"
+
+
 def test_chat_product_recommendation_uses_product_tool(client: TestClient) -> None:
     response = client.post(
         "/api/chat",

@@ -11,6 +11,7 @@ This is still an MVP. It does not use a real LLM, vector database, authenticatio
 - ShopDesk-style customer service frontend
 - Chat UI connected to the backend `/api/chat` endpoint
 - Chat history restored from SQLite when the frontend reloads
+- Follow-up questions can reuse recent conversation context for order and product requests
 - Customer-facing result cards for orders, products, policies, and support tickets
 - Recent order shortcuts and common help topics
 - Order lookup for mock orders
@@ -145,7 +146,9 @@ GET http://127.0.0.1:8000/api/chat/history/frontend-demo
 Frontend examples to try:
 
 - `Where is my order 1001?`
+- `When will it arrive?`
 - `Recommend a budget keyboard under $50`
+- `Anything cheaper?`
 - `Can I return headphones after 40 days?`
 - `Does warranty cover water damage?`
 - `My package arrived broken for order 1001`
@@ -168,7 +171,7 @@ pip install -r requirements-dev.txt
 python -m pytest
 ```
 
-The backend test suite covers health checks, order lookup, product search, chat tool routing, chat history persistence, policy retrieval, support ticket creation, privacy refusal, and core intent classification.
+The backend test suite covers health checks, order lookup, product search, chat tool routing, follow-up context handling, chat history persistence, policy retrieval, support ticket creation, privacy refusal, and core intent classification.
 
 ## Local Data
 

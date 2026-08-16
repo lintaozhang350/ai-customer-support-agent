@@ -18,9 +18,11 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 
 @router.post("", response_model=ChatResponse)
 def chat(request: ChatRequest) -> ChatResponse:
-    response = handle_chat(request)
+    conversation_id = request.conversation_id or "default"
+    conversation_history = list_chat_messages(conversation_id)
+    response = handle_chat(request, conversation_history=conversation_history)
     save_chat_exchange(
-        conversation_id=request.conversation_id or "default",
+        conversation_id=conversation_id,
         user_id=request.user_id,
         customer_message=request.message,
         agent_response=response,

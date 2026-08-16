@@ -1,4 +1,4 @@
-from app.schemas.chat import ChatRequest, ChatResponse, IntentResult
+from app.schemas.chat import ChatHistoryMessage, ChatRequest, ChatResponse, IntentResult
 from app.schemas.order import Order
 from app.schemas.product import Product
 from app.schemas.ticket import SupportTicketCreate
@@ -8,8 +8,16 @@ from app.services.policy_search import search_policy
 from app.services.ticket_service import create_support_ticket
 
 
-def handle_chat(request: ChatRequest) -> ChatResponse:
+def handle_chat(
+    request: ChatRequest,
+    conversation_history: list[ChatHistoryMessage] | None = None,
+) -> ChatResponse:
     intent_result = classify_message(request.message)
+    intent_result = _apply_conversation_context(
+        request.message,
+        intent_result,
+        conversation_history or [],
+    )
 
     if intent_result.intent == "order_status":
         return _handle_order_status(intent_result)
@@ -153,3 +161,73 @@ def _format_policy_answer(policy_chunks: list[dict[str, str | float]]) -> str:
     source = top_chunk["source"]
     text = top_chunk["text"]
     return f"Based on the {policy_name} ({source}), {text}"
+
+
+def _apply_conversation_context(
+    message: str,
+    intent_result: IntentResult,
+    conversation_history: list[ChatHistoryMessage],
+) -> IntentResult:
+    if not conversation_history:
+        return intent_result
+
+    normalized = message.lower()
+    contextual_order_id = _find_recent_order_id(conversation_history)
+    contextual_category = _find_recent_category(conversation_history)
+
+    updated_intent = intent_result.model_copy(deep=True)
+
+    if updated_intent.entities.order_id is None and contextual_order_id is not None:
+        if updated_intent.intent in ["complaint", "human_escalation", "order_status"]:
+            updated_intent.entities.order_id = contextual_order_id
+
+        if updated_intent.intent in ["shipping_policy", "general_question"] and _looks_like_order_follow_up(normalized):
+            updated_intent.intent = "order_status"
+            updated_intent.confidence = max(updated_intent.confidence, 0.79)
+            updated_intent.suggested_action = "lookup_order"
+            updated_intent.entities.order_id = contextual_order_id
+
+    if updated_intent.entities.category is None and contextual_category is not None:
+        if updated_intent.intent == "product_recommendation":
+            updated_intent.entities.category = contextual_category
+            if updated_intent.entities.keyword is None:
+                updated_intent.entities.keyword = contextual_category
+
+    return updated_intent
+
+
+def _find_recent_order_id(conversation_history: list[ChatHistoryMessage]) -> int | None:
+    for history_message in reversed(conversation_history):
+        if history_message.role != "customer":
+            continue
+
+        result = classify_message(history_message.text)
+        if result.entities.order_id is not None:
+            return result.entities.order_id
+
+    return None
+
+
+def _find_recent_category(conversation_history: list[ChatHistoryMessage]) -> str | None:
+    for history_message in reversed(conversation_history):
+        if history_message.role != "customer":
+            continue
+
+        result = classify_message(history_message.text)
+        if result.entities.category is not None:
+            return result.entities.category
+
+    return None
+
+
+def _looks_like_order_follow_up(normalized_message: str) -> bool:
+    has_reference = any(
+        phrase in normalized_message
+        for phrase in ["it", "that", "this order", "that order", "my order", "the order"]
+    )
+    has_tracking_language = any(
+        phrase in normalized_message
+        for phrase in ["arrive", "delivery", "deliver", "track", "status", "where"]
+    )
+
+    return has_reference and has_tracking_language
