@@ -23,9 +23,17 @@ type ChatApiResponse = {
 
 type ChatHistoryMessage = {
   id: number;
+  conversation_id: string;
   role: ChatRole;
   text: string;
   metadata: ChatApiResponse | null;
+};
+
+type ConversationSummary = {
+  conversation_id: string;
+  preview: string;
+  message_count: number;
+  last_message_at: string;
 };
 
 type ChatMessage = {
@@ -35,7 +43,12 @@ type ChatMessage = {
   metadata?: ChatApiResponse;
 };
 
-const conversationId = 'frontend-demo';
+const defaultConversationId = 'frontend-demo';
+const defaultWelcomeMessage: ChatMessage = {
+  id: 'welcome',
+  role: 'agent',
+  text: 'Hello. Tell me what you need help with, or choose one of the common topics on the right.',
+};
 
 const demoPrompts = [
   {
@@ -65,13 +78,9 @@ const demoPrompts = [
 ];
 
 export default function ChatWindow() {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 'welcome',
-      role: 'agent',
-      text: 'Hello. Tell me what you need help with, or choose one of the common topics on the right.',
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([defaultWelcomeMessage]);
+  const [conversationId, setConversationId] = useState(defaultConversationId);
+  const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -90,29 +99,42 @@ export default function ChatWindow() {
         }
 
         const history = (await response.json()) as ChatHistoryMessage[];
-        if (!isActive || history.length === 0) {
+        if (!isActive) {
           return;
         }
 
-        setMessages(
-          history.map((historyMessage) => ({
-            id: `history-${historyMessage.id}`,
-            role: historyMessage.role,
-            text: historyMessage.text,
-            metadata: historyMessage.metadata ?? undefined,
-          })),
-        );
+        if (history.length === 0) {
+          setMessages([defaultWelcomeMessage]);
+          return;
+        }
+
+        setMessages(history.map(mapHistoryMessage));
+      } catch (requestError) {
+        console.error(requestError);
+      }
+    }
+
+    async function loadConversations() {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/chat/conversations');
+        if (!response.ok || !isActive) {
+          return;
+        }
+
+        const summaries = (await response.json()) as ConversationSummary[];
+        setConversations(summaries);
       } catch (requestError) {
         console.error(requestError);
       }
     }
 
     void loadChatHistory();
+    void loadConversations();
 
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [conversationId]);
 
   async function sendMessage(messageText: string) {
     const trimmedMessage = messageText.trim();
@@ -157,6 +179,14 @@ export default function ChatWindow() {
       };
 
       setMessages((currentMessages) => [...currentMessages, agentMessage]);
+      setConversations((currentConversations) =>
+        upsertConversationSummary(currentConversations, {
+          conversation_id: conversationId,
+          preview: trimmedMessage,
+          message_count: messages.length + 2,
+          last_message_at: new Date().toISOString(),
+        }),
+      );
     } catch (requestError) {
       console.error(requestError);
       setError(
@@ -172,6 +202,13 @@ export default function ChatWindow() {
     void sendMessage(input);
   }
 
+  function handleNewConversation() {
+    const nextConversationId = `conversation-${crypto.randomUUID()}`;
+    setConversationId(nextConversationId);
+    setMessages([defaultWelcomeMessage]);
+    setError(null);
+  }
+
   return (
     <section className="grid flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
       <div
@@ -185,9 +222,18 @@ export default function ChatWindow() {
               Signed in as demo customer #1
             </p>
           </div>
-          <span className="rounded-sm bg-[#f0f2f2] px-2.5 py-1 text-xs font-medium text-slate-700">
-            Secure session
-          </span>
+          <div className="flex items-center gap-2">
+            <button
+              className="rounded-sm border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-50"
+              type="button"
+              onClick={handleNewConversation}
+            >
+              New conversation
+            </button>
+            <span className="rounded-sm bg-[#f0f2f2] px-2.5 py-1 text-xs font-medium text-slate-700">
+              Secure session
+            </span>
+          </div>
         </div>
 
         <div className="flex flex-1 flex-col gap-4 overflow-y-auto bg-white p-5">
@@ -244,6 +290,46 @@ export default function ChatWindow() {
       </div>
 
       <aside className="space-y-4 lg:sticky lg:top-4 lg:self-start">
+        <div className="rounded-md border border-slate-300 bg-white p-4 shadow-sm">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold">Recent conversations</h2>
+            <button
+              className="text-xs font-medium text-slate-600 hover:text-slate-900"
+              type="button"
+              onClick={handleNewConversation}
+            >
+              New
+            </button>
+          </div>
+          <div className="mt-3 space-y-2">
+            {conversations.length === 0 ? (
+              <div className="rounded-md border border-dashed border-slate-200 px-3 py-3 text-xs text-slate-500">
+                Your recent customer support conversations will appear here.
+              </div>
+            ) : (
+              conversations.map((conversation) => (
+                <button
+                  key={conversation.conversation_id}
+                  className={
+                    conversation.conversation_id === conversationId
+                      ? 'w-full rounded-md border border-amber-300 bg-amber-50 px-3 py-3 text-left'
+                      : 'w-full rounded-md border border-slate-200 bg-white px-3 py-3 text-left hover:border-slate-300 hover:bg-slate-50'
+                  }
+                  type="button"
+                  onClick={() => setConversationId(conversation.conversation_id)}
+                >
+                  <div className="truncate text-sm font-medium text-slate-900">
+                    {truncateText(conversation.preview)}
+                  </div>
+                  <div className="mt-1 text-xs text-slate-500">
+                    {conversation.message_count} messages
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+
         <div id="recent-orders" className="scroll-mt-20 rounded-md border border-slate-300 bg-white p-4 shadow-sm">
           <h2 className="text-sm font-semibold">Your recent orders</h2>
           <div className="mt-3 space-y-2">
@@ -302,6 +388,30 @@ export default function ChatWindow() {
       </aside>
     </section>
   );
+}
+
+function mapHistoryMessage(historyMessage: ChatHistoryMessage): ChatMessage {
+  return {
+    id: `history-${historyMessage.id}`,
+    role: historyMessage.role,
+    text: historyMessage.text,
+    metadata: historyMessage.metadata ?? undefined,
+  };
+}
+
+function upsertConversationSummary(
+  currentConversations: ConversationSummary[],
+  conversation: ConversationSummary,
+): ConversationSummary[] {
+  const nextConversations = currentConversations.filter(
+    (item) => item.conversation_id !== conversation.conversation_id,
+  );
+
+  return [conversation, ...nextConversations].slice(0, 10);
+}
+
+function truncateText(value: string) {
+  return value.length > 48 ? `${value.slice(0, 48)}...` : value;
 }
 
 function MessageBubble({ message }: { message: ChatMessage }) {

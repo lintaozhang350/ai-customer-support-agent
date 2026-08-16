@@ -52,3 +52,11 @@ class ChatHistoryMessage(BaseModel):
     text: str
     metadata: dict[str, Any] | None = None
     created_at: datetime
+
+
+class ConversationSummary(BaseModel):
+    conversation_id: str
+    user_id: int | None = None
+    preview: str
+    message_count: int
+    last_message_at: datetime

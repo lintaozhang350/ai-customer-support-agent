@@ -76,6 +76,37 @@ def test_chat_history_returns_saved_exchange(client: TestClient) -> None:
     assert history[1]["metadata"]["tool_used"] == "get_order_status"
 
 
+def test_conversations_endpoint_returns_recent_summary(client: TestClient) -> None:
+    first_response = client.post(
+        "/api/chat",
+        json={
+            "message": "Where is my order 1001?",
+            "user_id": 1,
+            "conversation_id": "conversation-a",
+        },
+    )
+    second_response = client.post(
+        "/api/chat",
+        json={
+            "message": "Recommend a budget keyboard under $50",
+            "user_id": 1,
+            "conversation_id": "conversation-b",
+        },
+    )
+
+    assert first_response.status_code == 200
+    assert second_response.status_code == 200
+
+    conversations_response = client.get("/api/chat/conversations")
+
+    assert conversations_response.status_code == 200
+    conversations = conversations_response.json()
+    assert len(conversations) == 2
+    assert conversations[0]["conversation_id"] == "conversation-b"
+    assert conversations[0]["preview"] == "Recommend a budget keyboard under $50"
+    assert conversations[0]["message_count"] == 2
+
+
 def test_chat_product_recommendation_uses_product_tool(client: TestClient) -> None:
     response = client.post(
         "/api/chat",

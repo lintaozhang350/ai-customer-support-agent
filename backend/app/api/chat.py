@@ -1,8 +1,17 @@
 from fastapi import APIRouter
 
-from app.schemas.chat import ChatHistoryMessage, ChatRequest, ChatResponse
+from app.schemas.chat import (
+    ChatHistoryMessage,
+    ChatRequest,
+    ChatResponse,
+    ConversationSummary,
+)
 from app.services.agent_service import handle_chat
-from app.services.conversation_service import list_chat_messages, save_chat_exchange
+from app.services.conversation_service import (
+    list_chat_messages,
+    list_conversations,
+    save_chat_exchange,
+)
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -22,3 +31,8 @@ def chat(request: ChatRequest) -> ChatResponse:
 @router.get("/history/{conversation_id}", response_model=list[ChatHistoryMessage])
 def read_chat_history(conversation_id: str) -> list[ChatHistoryMessage]:
     return list_chat_messages(conversation_id)
+
+
+@router.get("/conversations", response_model=list[ConversationSummary])
+def read_conversations() -> list[ConversationSummary]:
+    return list_conversations()
