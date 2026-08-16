@@ -147,15 +147,23 @@ def search_products(
         parameters.append(budget)
 
     if keyword:
-        query += """
-            AND (
-                lower(name) LIKE lower(?)
-                OR lower(description) LIKE lower(?)
-                OR lower(category) LIKE lower(?)
-            )
-        """
-        keyword_pattern = f"%{keyword}%"
-        parameters.extend([keyword_pattern, keyword_pattern, keyword_pattern])
+        keyword_terms = [term.strip() for term in keyword.lower().split() if term.strip()]
+        if keyword_terms:
+            keyword_clauses: list[str] = []
+            for term in keyword_terms:
+                keyword_clauses.append(
+                    """
+                    (
+                        lower(name) LIKE lower(?)
+                        OR lower(description) LIKE lower(?)
+                        OR lower(category) LIKE lower(?)
+                    )
+                    """
+                )
+                keyword_pattern = f"%{term}%"
+                parameters.extend([keyword_pattern, keyword_pattern, keyword_pattern])
+
+            query += " AND (" + " OR ".join(keyword_clauses) + ")"
 
     query += " ORDER BY id ASC"
 

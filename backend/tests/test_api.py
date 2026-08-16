@@ -36,6 +36,19 @@ def test_product_search_filters_by_category_and_budget(client: TestClient) -> No
     ]
 
 
+def test_product_search_matches_multi_word_keyword(client: TestClient) -> None:
+    response = client.get(
+        "/api/products/search?category=keyboard&budget=50&keyword=budget%20keyboard"
+    )
+
+    assert response.status_code == 200
+    products = response.json()
+    assert [product["name"] for product in products] == [
+        "Mechanical Keyboard Lite",
+        "Quiet Office Keyboard",
+    ]
+
+
 def test_chat_order_status_uses_order_tool(client: TestClient) -> None:
     response = client.post(
         "/api/chat",

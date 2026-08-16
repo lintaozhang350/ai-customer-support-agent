@@ -38,6 +38,9 @@ export default function App() {
             <h1 className="mt-1 text-2xl font-semibold text-slate-950">
               Get help with your order
             </h1>
+            <p className="mt-1 text-sm text-slate-600">
+              Message customer service about delivery, returns, warranty coverage, or product recommendations.
+            </p>
           </div>
           <div className="flex items-center gap-2 text-sm text-slate-600">
             <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />

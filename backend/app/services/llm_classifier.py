@@ -84,6 +84,9 @@ Return an object with this exact shape:
 
 Infer order_id, category, budget, and keyword when possible.
 If the request asks for another customer's private information, use unsafe_private_request.
+Use complaint only when the customer is describing a concrete support problem such as a broken, missing, delayed, or incorrect order.
+Do not classify a message as complaint just because it sounds casual, negative, rude, or dismissive.
+If the message is vague small talk, a greeting, or an identity question, use general_question.
 """.strip()
 
 

@@ -28,7 +28,17 @@ def test_handle_chat_returns_helpful_fallback_for_general_question() -> None:
 
     assert response.intent_result.intent == "general_question"
     assert response.tool_used is None
-    assert "order, product, policy, or issue" in response.answer
+    assert "order" in response.answer.lower()
+    assert "return" in response.answer.lower()
+
+
+def test_handle_chat_answers_identity_question_with_support_scope() -> None:
+    response = handle_chat(ChatRequest(message="Who are you?"))
+
+    assert response.intent_result.intent == "general_question"
+    assert response.tool_used is None
+    assert "shopdesk customer service" in response.answer.lower()
+    assert "support ticket" in response.answer.lower()
 
 
 def test_handle_chat_handles_missing_order_number() -> None:
@@ -133,6 +143,24 @@ def test_handle_chat_uses_llm_classifier_when_available(monkeypatch) -> None:
     assert response.intent_result.intent == "product_recommendation"
     assert response.intent_result.entities.category == "keyboard"
     assert response.tool_used == "search_products"
+
+
+def test_handle_chat_ignores_overeager_llm_complaint_for_vague_message(monkeypatch) -> None:
+    monkeypatch.setattr(
+        agent_service,
+        "classify_message_with_llm",
+        lambda *_args, **_kwargs: classify_message("My package arrived broken for order 1001"),
+    )
+    monkeypatch.setattr(
+        agent_service,
+        "generate_answer_with_llm",
+        lambda *_args, **_kwargs: None,
+    )
+
+    response = handle_chat(ChatRequest(message="Hi this is stupid tao"))
+
+    assert response.intent_result.intent == "general_question"
+    assert response.tool_used is None
 
 
 def test_handle_chat_uses_llm_answer_generation_when_available(monkeypatch) -> None:

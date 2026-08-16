@@ -47,7 +47,7 @@ const defaultConversationId = 'frontend-demo';
 const defaultWelcomeMessage: ChatMessage = {
   id: 'welcome',
   role: 'agent',
-  text: 'Hello. Tell me what you need help with, or choose one of the common topics on the right.',
+  text: 'Hi, I can help with orders, returns, warranty questions, and product recommendations.',
 };
 
 const demoPrompts = [
@@ -210,10 +210,10 @@ export default function ChatWindow() {
   }
 
   return (
-    <section className="grid flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+    <section className="grid flex-1 gap-5 lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_360px]">
       <div
         id="support-chat"
-        className="flex min-h-[500px] w-full scroll-mt-20 flex-col self-start overflow-hidden rounded-md border border-slate-300 bg-white shadow-sm lg:min-h-[340px]"
+        className="flex min-h-[540px] w-full scroll-mt-20 flex-col self-start overflow-hidden rounded-md border border-slate-300 bg-white shadow-sm lg:min-h-[680px]"
       >
         <div className="flex items-center justify-between border-b border-slate-200 bg-white px-5 py-4">
           <div>
@@ -236,7 +236,11 @@ export default function ChatWindow() {
           </div>
         </div>
 
-        <div className="flex flex-1 flex-col gap-4 overflow-y-auto bg-white p-5">
+        <div className="border-b border-slate-200 bg-[#fbfbfb] px-5 py-3 text-xs text-slate-500">
+          Typical help topics: order tracking, returns, warranty coverage, damaged deliveries, and product recommendations.
+        </div>
+
+        <div className="flex flex-1 flex-col justify-end gap-3 overflow-y-auto bg-white p-5">
           {messages.map((message) => (
             <MessageBubble key={message.id} message={message} />
           ))}
@@ -260,7 +264,7 @@ export default function ChatWindow() {
             </div>
           ) : null}
           {isSending ? (
-            <div className="max-w-xl rounded-md bg-[#f7fafa] px-4 py-3 text-sm text-slate-600">
+            <div className="max-w-xl rounded-md border border-slate-200 bg-[#f7fafa] px-4 py-3 text-sm text-slate-600">
               Checking your request...
             </div>
           ) : null}
@@ -274,7 +278,7 @@ export default function ChatWindow() {
         <form className="flex gap-3 border-t border-slate-200 bg-[#f7fafa] p-4" onSubmit={handleSubmit}>
           <input
             className="min-w-0 flex-1 rounded-sm border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-100 disabled:cursor-not-allowed disabled:bg-slate-100"
-            placeholder="Message customer service"
+            placeholder="Ask about an order, return, warranty, or product"
             value={input}
             disabled={isSending}
             onChange={(event) => setInput(event.target.value)}
@@ -418,12 +422,21 @@ function MessageBubble({ message }: { message: ChatMessage }) {
   const isAgent = message.role === 'agent';
 
   return (
-    <div className={isAgent ? 'max-w-[680px]' : 'ml-auto max-w-[560px]'}>
+    <div className={isAgent ? 'max-w-[720px]' : 'ml-auto max-w-[560px]'}>
       <div
         className={
           isAgent
-            ? 'rounded-md bg-[#f0f2f2] px-4 py-3 text-sm text-slate-950'
-            : 'rounded-md bg-[#232f3e] px-4 py-3 text-sm font-medium text-white'
+            ? 'mb-1 text-[11px] font-medium uppercase tracking-wide text-slate-500'
+            : 'mb-1 text-right text-[11px] font-medium uppercase tracking-wide text-slate-500'
+        }
+      >
+        {isAgent ? 'Customer service' : 'You'}
+      </div>
+      <div
+        className={
+          isAgent
+            ? 'rounded-md border border-slate-200 bg-[#f7f8f8] px-4 py-3 text-sm leading-6 text-slate-950'
+            : 'rounded-md bg-[#232f3e] px-4 py-3 text-sm font-medium leading-6 text-white shadow-sm'
         }
       >
         {message.text}
@@ -439,13 +452,13 @@ function ToolMetadata({ metadata }: { metadata: ChatApiResponse }) {
       <BusinessResult metadata={metadata} />
       <details className="rounded-md border border-slate-200 bg-white text-xs text-slate-600 shadow-sm">
         <summary className="cursor-pointer px-3 py-2 font-medium">
-          View case details
+          View technical details
         </summary>
         <div className="border-t border-slate-200 p-3">
           <div className="flex flex-wrap gap-2">
-            <MetadataPill label="Reason" value={formatLabel(metadata.intent_result.intent)} />
-            <MetadataPill label="Action taken" value={formatLabel(metadata.intent_result.suggested_action)} />
-            <MetadataPill label="Reference" value={formatLabel(metadata.tool_used ?? 'none')} />
+            <MetadataPill label="Reason" value={formatReason(metadata.intent_result.intent)} />
+            <MetadataPill label="Action taken" value={formatAction(metadata.intent_result.suggested_action)} />
+            <MetadataPill label="Reference" value={formatReference(metadata.tool_used)} />
           </div>
           {metadata.tool_result ? (
             <pre className="mt-3 max-h-44 overflow-auto rounded-md bg-slate-950 p-3 text-[11px] leading-relaxed text-slate-100">
@@ -517,7 +530,10 @@ function ProductResults({ result }: { result: unknown }) {
 
   return (
     <div className="rounded-md border border-slate-200 bg-white p-4 text-sm shadow-sm">
-      <div className="mb-3 font-semibold text-slate-950">Recommended items</div>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="font-semibold text-slate-950">Recommended items</div>
+        <div className="text-xs text-slate-500">{result.length} match{result.length === 1 ? '' : 'es'}</div>
+      </div>
       <div className="grid gap-2">
         {result.map((product) => (
           <div
@@ -528,6 +544,9 @@ function ProductResults({ result }: { result: unknown }) {
               <div>
                 <div className="font-medium text-slate-950">{product.name}</div>
                 <div className="mt-1 text-xs text-slate-500">{product.description}</div>
+                <div className="mt-2 text-xs uppercase tracking-wide text-slate-400">
+                  {formatLabel(product.category)}
+                </div>
               </div>
               <div className="text-right">
                 <div className="font-semibold text-slate-950">
@@ -557,7 +576,7 @@ function PolicyResults({ result }: { result: unknown }) {
       <div className="text-xs font-medium uppercase text-slate-500">
         Policy reference
       </div>
-      <div className="mt-2 text-slate-900">{topResult.text}</div>
+      <div className="mt-2 leading-6 text-slate-900">{topResult.text}</div>
       <div className="mt-3 text-xs text-slate-500">
         Source: {formatLabel(topResult.policy)} / {topResult.source}
       </div>
@@ -578,12 +597,12 @@ function TicketResultCard({ result }: { result: unknown }) {
           <div className="mt-1 font-semibold text-slate-950">Ticket #{result.id}</div>
         </div>
         <span className="rounded-md bg-white px-2.5 py-1 text-xs font-semibold text-amber-700">
-          {formatLabel(result.status)}
+          {formatTicketStatus(result.status)}
         </span>
       </div>
       <div className="mt-3 text-slate-800">{result.summary}</div>
-      <div className="mt-3 text-xs text-slate-600">
-        A customer service representative can use this ticket to follow up.
+      <div className="mt-3 text-xs leading-5 text-slate-600">
+        A customer service representative can use this ticket to follow up. Keep the ticket number for reference if you contact support again.
       </div>
     </div>
   );
@@ -641,6 +660,61 @@ function formatLabel(value: string) {
     .replace(/\b\w/g, (letter: string) => letter.toUpperCase());
 }
 
+function formatReason(value: string) {
+  const labels: Record<string, string> = {
+    complaint: 'Damaged or missing order',
+    general_question: 'General support question',
+    human_escalation: 'Requested human help',
+    order_status: 'Order status lookup',
+    product_recommendation: 'Product recommendation',
+    return_policy: 'Return policy question',
+    shipping_policy: 'Shipping question',
+    unsafe_private_request: 'Privacy-protected request',
+    warranty_policy: 'Warranty question',
+  };
+
+  return labels[value] ?? formatLabel(value);
+}
+
+function formatAction(value: string) {
+  const labels: Record<string, string> = {
+    answer_generally: 'Provided general guidance',
+    create_support_ticket: 'Created support ticket',
+    lookup_order: 'Checked order details',
+    refuse_request: 'Protected customer privacy',
+    search_policy: 'Checked policy details',
+    search_products: 'Searched matching products',
+  };
+
+  return labels[value] ?? formatLabel(value);
+}
+
+function formatReference(value: string | null) {
+  if (!value) {
+    return 'Chat response';
+  }
+
+  const labels: Record<string, string> = {
+    create_support_ticket: 'Support ticket system',
+    get_order_status: 'Order records',
+    refuse_request: 'Privacy rules',
+    search_policy: 'Policy library',
+    search_products: 'Product catalog',
+  };
+
+  return labels[value] ?? formatLabel(value);
+}
+
+function formatTicketStatus(value: string) {
+  const labels: Record<string, string> = {
+    open: 'Submitted',
+    pending: 'In review',
+    resolved: 'Resolved',
+  };
+
+  return labels[value] ?? formatLabel(value);
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
@@ -663,6 +737,7 @@ function isOrderResult(value: unknown): value is {
 function isProductResult(value: unknown): value is {
   id: number;
   name: string;
+  category: string;
   price: number;
   description: string;
   inventory_count: number;
@@ -671,6 +746,7 @@ function isProductResult(value: unknown): value is {
     isRecord(value) &&
     typeof value.id === 'number' &&
     typeof value.name === 'string' &&
+    typeof value.category === 'string' &&
     typeof value.price === 'number' &&
     typeof value.description === 'string' &&
     typeof value.inventory_count === 'number'

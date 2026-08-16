@@ -15,10 +15,16 @@ def handle_chat(
     conversation_history: list[ChatHistoryMessage] | None = None,
 ) -> ChatResponse:
     history = conversation_history or []
-    intent_result = classify_message_with_llm(
+    fallback_intent_result = classify_message(request.message)
+    llm_intent_result = classify_message_with_llm(
         request.message,
         conversation_history=history,
-    ) or classify_message(request.message)
+    )
+    intent_result = _select_intent_result(
+        request.message,
+        llm_intent_result=llm_intent_result,
+        fallback_intent_result=fallback_intent_result,
+    )
     intent_result = _apply_conversation_context(
         request.message,
         intent_result,
@@ -66,8 +72,12 @@ def handle_chat(
         )
         return _finalize_response(request.message, response, history)
 
+    if intent_result.intent == "general_question":
+        response = _handle_general_question(request.message, intent_result)
+        return _finalize_response(request.message, response, history)
+
     response = ChatResponse(
-        answer="I can help with customer support questions. Please share an order, product, policy, or issue.",
+        answer="I can help with orders, returns, warranty questions, product recommendations, and support issues. Tell me what you need help with.",
         intent_result=intent_result,
     )
     return _finalize_response(request.message, response, history)
@@ -144,6 +154,34 @@ def _handle_escalation(
     )
 
 
+def _handle_general_question(message: str, intent_result: IntentResult) -> ChatResponse:
+    normalized_message = message.strip().lower()
+
+    if any(
+        greeting in normalized_message
+        for greeting in ["hello", "hi", "hey", "good morning", "good afternoon"]
+    ):
+        answer = (
+            "Hi, I can help with an order, return, warranty question, product search, or support issue."
+        )
+    elif any(
+        phrase in normalized_message
+        for phrase in ["who are you", "what can you do", "how can you help"]
+    ):
+        answer = (
+            "I'm ShopDesk customer service. I can check orders, explain returns or warranty coverage, recommend products, and create a support ticket if needed."
+        )
+    else:
+        answer = (
+            "I can help with orders, returns, warranty questions, product recommendations, and support issues. Tell me what you need help with."
+        )
+
+    return ChatResponse(
+        answer=answer,
+        intent_result=intent_result,
+    )
+
+
 def _format_order_answer(order: Order) -> str:
     if order.status == "shipped" and order.estimated_delivery:
         return f"Your order {order.id} for {order.item_name} has shipped and is estimated to arrive on {order.estimated_delivery}."
@@ -174,6 +212,24 @@ def _format_policy_answer(policy_chunks: list[dict[str, str | float]]) -> str:
     source = top_chunk["source"]
     text = top_chunk["text"]
     return f"Based on the {policy_name} ({source}), {text}"
+
+
+def _select_intent_result(
+    message: str,
+    llm_intent_result: IntentResult | None,
+    fallback_intent_result: IntentResult,
+) -> IntentResult:
+    if llm_intent_result is None:
+        return fallback_intent_result
+
+    if (
+        llm_intent_result.intent in ["complaint", "human_escalation"]
+        and fallback_intent_result.intent == "general_question"
+        and not _looks_like_support_issue(message)
+    ):
+        return fallback_intent_result
+
+    return llm_intent_result
 
 
 def _apply_conversation_context(
@@ -244,6 +300,36 @@ def _looks_like_order_follow_up(normalized_message: str) -> bool:
     )
 
     return has_reference and has_tracking_language
+
+
+def _looks_like_support_issue(message: str) -> bool:
+    normalized_message = message.lower()
+    issue_phrases = [
+        "broken",
+        "damaged",
+        "missing",
+        "late",
+        "delayed",
+        "wrong item",
+        "refund",
+        "return",
+        "exchange",
+        "cancel",
+        "complaint",
+        "frustrated",
+        "angry",
+        "manager",
+        "supervisor",
+        "human",
+        "representative",
+        "agent",
+        "help me",
+        "issue",
+        "problem",
+        "not working",
+    ]
+
+    return any(phrase in normalized_message for phrase in issue_phrases)
 
 
 def _finalize_response(

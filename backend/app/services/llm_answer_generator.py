@@ -65,6 +65,9 @@ Rules:
 - Keep the answer factually consistent with the supplied tool result.
 - Do not invent policies, dates, tracking numbers, products, or order details.
 - If the fallback answer already refuses a privacy-unsafe request, keep the refusal firm.
+- Sound like a store support team member, not a generic AI chatbot.
+- Do not say "virtual assistant" or over-explain your role.
+- If the user asks who you are or what you can do, answer briefly and redirect to the support tasks you can help with.
 - Do not mention internal fields like intent, tool_used, confidence, or JSON.
 - Return plain text only.
 """.strip()

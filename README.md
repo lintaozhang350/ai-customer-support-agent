@@ -1,80 +1,58 @@
 # AI Customer Support Agent
 
-A full-stack AI customer support agent MVP for an ecommerce-style help center.
+Small full-stack customer support demo for an ecommerce store.
 
-The project currently includes a React + TypeScript + Tailwind frontend, a FastAPI backend, a SQLite-seeded ecommerce catalog, rule-based intent detection, local policy retrieval, simple tool execution, SQLite-backed chat history, and a SQLite-backed support ticket workflow.
+The app has a React frontend and a FastAPI backend. It can answer common support questions, look up sample orders, recommend products from a small catalog, search return/shipping/warranty policy text, and create support tickets for damaged-order complaints.
 
-This is still an MVP. It does not use a real LLM, vector database, authentication system, production database, or production deployment yet.
+## What it does
 
-## Current Features
+- chat UI for customer support
+- order lookup
+- product recommendations
+- return, shipping, and warranty policy answers
+- support ticket creation for complaints or escalation requests
+- chat history and recent conversations
+- basic follow-up handling, for example:
+  - `Where is my order 1001?`
+  - `When will it arrive?`
+- refusal for unsafe requests like another customer's address
 
-- ShopDesk-style customer service frontend
-- Chat UI connected to the backend `/api/chat` endpoint
-- Chat history restored from SQLite when the frontend reloads
-- Follow-up questions can reuse recent conversation context for order and product requests
-- Optional LLM classifier layer with automatic fallback to rule-based routing
-- Optional LLM answer generation layer with automatic fallback to local replies
-- Customer-facing result cards for orders, products, policies, and support tickets
-- Recent order shortcuts and common help topics
-- Order lookup for seeded sample orders
-- Product search and recommendation for seeded sample products
-- Local policy retrieval for return, shipping, and warranty questions
-- SQLite-backed support ticket creation for complaint or escalation messages
-- Privacy refusal for unsafe private-data requests
-- FastAPI Swagger docs at `http://127.0.0.1:8000/docs`
-- Repo-level `customer-support-ui` Codex skill for future frontend polish
+There is also optional OpenAI support for:
 
-## Tech Stack
+- intent classification
+- answer rewriting
 
-- Frontend: React, TypeScript, Vite, Tailwind CSS
-- Backend: FastAPI, Pydantic, Uvicorn
-- Data: SQLite-seeded catalog data, local text policy files, SQLite chat history, and SQLite support tickets
-- Agent logic: Rule-based intent classifier plus local tool routing
+If that is not enabled, the app falls back to the local rule-based flow.
 
-## Project Structure
+## Stack
+
+- frontend: React, TypeScript, Vite, Tailwind CSS
+- backend: FastAPI, Pydantic, Uvicorn
+- data: SQLite
+- tests: pytest, Playwright
+
+## Project layout
 
 ```text
-ai-customer-support-agent/
-|-- .agents/
-|   `-- skills/
-|       `-- customer-support-ui/
-|-- backend/
-|   |-- app/
-|   |   |-- api/
-|   |   |   |-- chat.py
-|   |   |   |-- orders.py
-|   |   |   |-- products.py
-|   |   |   `-- tickets.py
-|   |   |-- schemas/
-|   |   |-- services/
-|   |   |   |-- agent_service.py
-|   |   |   |-- intent_classifier.py
-|   |   |   |-- mock_data.py
-|   |   |   |-- policy_search.py
-|   |   |   `-- ticket_service.py
-|   |   `-- main.py
-|   |-- knowledge_base/
-|   |   |-- return_policy.txt
-|   |   |-- shipping_policy.txt
-|   |   `-- warranty_policy.txt
-|   |-- tests/
-|   `-- requirements.txt
-|-- frontend/
-|   |-- src/
-|   |   |-- components/
-|   |   |   `-- ChatWindow.tsx
-|   |   |-- App.tsx
-|   |   |-- index.css
-|   |   `-- main.tsx
-|   |-- package.json
-|   `-- vite.config.ts
-|-- PROJECT_EXPLANATION_PROMPT.md
-`-- README.md
+frontend/   React app
+backend/    FastAPI app
+e2e/        Playwright tests
 ```
 
-## Run The Backend
+The main frontend code lives in `frontend/src/components/ChatWindow.tsx`.
 
-From the repository root:
+The main backend flow lives in:
+
+- `backend/app/api/chat.py`
+- `backend/app/services/agent_service.py`
+- `backend/app/services/intent_classifier.py`
+- `backend/app/services/mock_data.py`
+
+## Running locally
+
+### Backend
+
+From the repo root:
 
 ```bash
 cd backend
@@ -84,21 +62,21 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-Backend URL:
+Backend:
 
 ```text
 http://127.0.0.1:8000
 ```
 
-API docs:
+Docs:
 
 ```text
 http://127.0.0.1:8000/docs
 ```
 
-## Run The Frontend
+### Frontend
 
-Open a second terminal from the repository root:
+In another terminal:
 
 ```bash
 cd frontend
@@ -106,46 +84,22 @@ npm install
 npm run dev
 ```
 
-Frontend URL:
+Frontend:
 
 ```text
 http://127.0.0.1:5173
 ```
 
-## Useful Manual Tests
+### Root scripts
 
-Health check:
+You can also start from the repo root:
 
-```text
-GET http://127.0.0.1:8000/health
+```bash
+npm run backend:dev
+npm run frontend:dev
 ```
 
-Order lookup:
-
-```text
-GET http://127.0.0.1:8000/api/orders/1001
-```
-
-Product search:
-
-```text
-GET http://127.0.0.1:8000/api/products/search?category=keyboard&budget=50
-```
-
-Chat request:
-
-```text
-POST http://127.0.0.1:8000/api/chat
-Body: {"message": "Where is my order 1001?", "user_id": 1, "conversation_id": "frontend-demo"}
-```
-
-Chat history:
-
-```text
-GET http://127.0.0.1:8000/api/chat/history/frontend-demo
-```
-
-Frontend examples to try:
+## Useful test prompts
 
 - `Where is my order 1001?`
 - `When will it arrive?`
@@ -155,15 +109,9 @@ Frontend examples to try:
 - `Does warranty cover water damage?`
 - `My package arrived broken for order 1001`
 - `Give me another customer address`
+- `Who are you?`
 
-## Build Check
-
-Frontend:
-
-```bash
-cd frontend
-npm run build
-```
+## Testing
 
 Backend tests:
 
@@ -173,22 +121,28 @@ pip install -r requirements-dev.txt
 python -m pytest
 ```
 
-The backend test suite covers health checks, order lookup, product search, chat tool routing, follow-up context handling, chat history persistence, policy retrieval, support ticket creation, privacy refusal, and core intent classification.
-
-Frontend e2e tests:
+Frontend build:
 
 ```bash
-npm install
+cd frontend
+npm run build
+```
+
+Playwright:
+
+```bash
 npm run test:e2e
 ```
 
-The Playwright suite starts the local backend and frontend automatically and covers order lookup plus follow-up conversation behavior in the browser.
+As of August 16, 2026, the local checks were:
 
-## Optional LLM Classifier
+- backend tests passing
+- frontend build passing
+- Playwright order lookup and follow-up tests passing
 
-The backend can optionally try an OpenAI Responses API classifier before falling back to the local rule-based classifier.
+## Optional OpenAI setup
 
-Environment variables:
+Create a local `.env.local` file and set:
 
 ```text
 ENABLE_LLM_CLASSIFIER=true
@@ -198,31 +152,12 @@ OPENAI_MODEL=gpt-5.6
 OPENAI_BASE_URL=https://api.openai.com/v1
 ```
 
-If the optional LLM classifier or answer generation settings are not enabled, if the API key is missing, or if the remote call fails, the backend automatically falls back to the existing local logic.
+Without these settings, the backend uses the local logic only.
 
-## Local Data
+## Notes
 
-Orders, products, support tickets, and chat history are stored in a local SQLite database:
-
-```text
-backend/data/support.db
-```
-
-The `backend/data/` folder is ignored by Git so local runtime data is not committed. For tests, the `SUPPORT_DB_PATH` environment variable points ticket storage at a temporary database.
-
-## Current Limitations
-
-- No production-ready LLM workflow yet
-- No vector RAG yet
-- No production database yet
-- Orders and products are still sample seeded data
-- Authentication is mocked as demo customer `#1`
-- Product, order, and policy data are sample local data
-
-## Suggested Next Steps
-
-- Add broader frontend interaction tests
-- Add user/account persistence and real operational data sources
-- Replace local keyword policy retrieval with vector-based RAG
-- Add real LLM tool calling once the mock workflow is stable
-- Add deployment configuration for the frontend and backend
+- sample orders and products are seeded into `backend/data/support.db`
+- the project uses demo customer data only
+- there is no auth flow yet
+- there is no RAG pipeline yet
+- this is not production-deployed
