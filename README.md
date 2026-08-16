@@ -1,13 +1,16 @@
 # AI Customer Support Agent
 
-A full-stack starter project for an AI customer support agent using React, FastAPI, RAG, and tool calling concepts. This repository is currently at the Day 1 setup stage: project structure, frontend scaffold, backend scaffold, and basic run instructions.
+A full-stack starter project for an AI customer support agent using React, FastAPI, RAG, and tool calling concepts. This repository is currently in the early MVP stage: project structure, frontend scaffold, backend scaffold, mock data, and basic API routes.
 
-## Day 1 Scope
+## Current Scope
 
 - React + TypeScript + Tailwind frontend folder
 - FastAPI backend folder
 - Basic health-check API
 - Placeholder chat UI
+- Mock order and product data
+- Order lookup API
+- Product search API
 - No RAG, vector database, tool calling, or agent workflow implemented yet
 
 ## Project Structure
@@ -69,9 +72,20 @@ Health check:
 GET http://localhost:8000/health
 ```
 
+Order lookup:
+
+```text
+GET http://localhost:8000/api/orders/1001
+```
+
+Product search:
+
+```text
+GET http://localhost:8000/api/products/search?category=keyboard&budget=50
+```
+
 ## Next Steps
 
-- Day 2: Add mock order and product data
 - Day 3: Add intent classification
 - Day 4: Add simple backend tools for order and product lookup
 - Day 5+: Add policy search and RAG
