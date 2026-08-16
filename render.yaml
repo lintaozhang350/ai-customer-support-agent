@@ -7,17 +7,13 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
-    disk:
-      name: support-data
-      mountPath: /var/data
-      sizeGB: 1
     envVars:
       - key: ENABLE_LLM_CLASSIFIER
         value: "false"
       - key: ENABLE_LLM_ANSWER_GENERATION
         value: "false"
       - key: SUPPORT_DB_PATH
-        value: /var/data/support.db
+        value: /tmp/support.db
       - key: CORS_ORIGINS
         value: http://localhost:5173,http://127.0.0.1:5173,https://lintao-ai-customer-support-demo.onrender.com
       - key: OPENAI_API_KEY
