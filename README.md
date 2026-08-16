@@ -153,7 +153,15 @@ cd frontend
 npm run build
 ```
 
-Backend currently does not have a full automated test suite. The available checks are manual API calls through Swagger docs, browser testing, and frontend build verification.
+Backend tests:
+
+```bash
+cd backend
+pip install -r requirements-dev.txt
+python -m pytest
+```
+
+The backend test suite covers health checks, order lookup, product search, chat tool routing, policy retrieval, support ticket creation, privacy refusal, and core intent classification.
 
 ## Current Limitations
 
@@ -166,8 +174,7 @@ Backend currently does not have a full automated test suite. The available check
 
 ## Suggested Next Steps
 
-- Add backend unit tests for intent classification and tool routing
-- Add API tests for `/api/chat`, orders, products, and tickets
+- Add broader frontend interaction tests
 - Add persistent storage for orders, products, conversations, and tickets
 - Replace local keyword policy retrieval with vector-based RAG
 - Add real LLM tool calling once the mock workflow is stable
