@@ -2,7 +2,7 @@
 
 A full-stack AI customer support agent MVP for an ecommerce-style help center.
 
-The project currently includes a React + TypeScript + Tailwind frontend, a FastAPI backend, mock ecommerce data, rule-based intent detection, local policy retrieval, simple tool execution, SQLite-backed chat history, and a SQLite-backed support ticket workflow.
+The project currently includes a React + TypeScript + Tailwind frontend, a FastAPI backend, a SQLite-seeded ecommerce catalog, rule-based intent detection, local policy retrieval, simple tool execution, SQLite-backed chat history, and a SQLite-backed support ticket workflow.
 
 This is still an MVP. It does not use a real LLM, vector database, authentication system, production database, or production deployment yet.
 
@@ -14,8 +14,8 @@ This is still an MVP. It does not use a real LLM, vector database, authenticatio
 - Follow-up questions can reuse recent conversation context for order and product requests
 - Customer-facing result cards for orders, products, policies, and support tickets
 - Recent order shortcuts and common help topics
-- Order lookup for mock orders
-- Product search and recommendation for mock products
+- Order lookup for seeded sample orders
+- Product search and recommendation for seeded sample products
 - Local policy retrieval for return, shipping, and warranty questions
 - SQLite-backed support ticket creation for complaint or escalation messages
 - Privacy refusal for unsafe private-data requests
@@ -26,7 +26,7 @@ This is still an MVP. It does not use a real LLM, vector database, authenticatio
 
 - Frontend: React, TypeScript, Vite, Tailwind CSS
 - Backend: FastAPI, Pydantic, Uvicorn
-- Data: In-memory mock ecommerce data, local text policy files, SQLite chat history, and SQLite support tickets
+- Data: SQLite-seeded catalog data, local text policy files, SQLite chat history, and SQLite support tickets
 - Agent logic: Rule-based intent classifier plus local tool routing
 
 ## Project Structure
@@ -175,7 +175,7 @@ The backend test suite covers health checks, order lookup, product search, chat 
 
 ## Local Data
 
-Support tickets and chat history are stored in a local SQLite database:
+Orders, products, support tickets, and chat history are stored in a local SQLite database:
 
 ```text
 backend/data/support.db
@@ -188,14 +188,14 @@ The `backend/data/` folder is ignored by Git so local runtime data is not commit
 - No real LLM integration yet
 - No vector RAG yet
 - No production database yet
-- Orders and products are still sample in-memory data
+- Orders and products are still sample seeded data
 - Authentication is mocked as demo customer `#1`
 - Product, order, and policy data are sample local data
 
 ## Suggested Next Steps
 
 - Add broader frontend interaction tests
-- Add persistent storage for orders, products, and conversations
+- Add user/account persistence and real operational data sources
 - Replace local keyword policy retrieval with vector-based RAG
 - Add real LLM tool calling once the mock workflow is stable
 - Add deployment configuration for the frontend and backend
