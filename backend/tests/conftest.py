@@ -6,9 +6,9 @@ from app.services import ticket_service
 
 
 @pytest.fixture(autouse=True)
-def reset_support_tickets() -> None:
-    ticket_service.SUPPORT_TICKETS.clear()
-    ticket_service.NEXT_TICKET_ID = 1
+def reset_support_tickets(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("SUPPORT_DB_PATH", str(tmp_path / "support-test.db"))
+    ticket_service.reset_support_tickets_for_tests()
 
 
 @pytest.fixture

@@ -89,6 +89,29 @@ def test_chat_complaint_creates_support_ticket(client: TestClient) -> None:
     assert data["tool_result"]["order_id"] == 1001
 
 
+def test_ticket_api_lists_created_ticket(client: TestClient) -> None:
+    create_response = client.post(
+        "/api/tickets",
+        json={
+            "user_id": 1,
+            "order_id": 1001,
+            "issue_type": "complaint",
+            "summary": "Package arrived broken",
+        },
+    )
+
+    assert create_response.status_code == 200
+    created_ticket = create_response.json()
+
+    list_response = client.get("/api/tickets")
+    detail_response = client.get(f"/api/tickets/{created_ticket['id']}")
+
+    assert list_response.status_code == 200
+    assert detail_response.status_code == 200
+    assert list_response.json()[0]["summary"] == "Package arrived broken"
+    assert detail_response.json()["order_id"] == 1001
+
+
 def test_chat_refuses_private_data_request(client: TestClient) -> None:
     response = client.post(
         "/api/chat",
