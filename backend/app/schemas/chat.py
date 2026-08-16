@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -38,3 +38,5 @@ class IntentResult(BaseModel):
 class ChatResponse(BaseModel):
     answer: str
     intent_result: IntentResult
+    tool_used: str | None = None
+    tool_result: dict[str, Any] | list[dict[str, Any]] | None = None

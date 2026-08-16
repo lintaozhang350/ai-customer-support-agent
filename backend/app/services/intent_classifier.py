@@ -51,27 +51,6 @@ def classify_message(message: str) -> IntentResult:
     return _result("general_question", 0.55, entities, "answer_generally")
 
 
-def build_placeholder_answer(intent_result: IntentResult) -> str:
-    if intent_result.intent == "order_status":
-        if intent_result.entities.order_id is None:
-            return "I can help check your order status. Please provide your order number."
-        return f"I found that you are asking about order {intent_result.entities.order_id}. The next step is to look it up in the order system."
-
-    if intent_result.intent in ["return_policy", "shipping_policy"]:
-        return "I can help with that policy question. The next step is to search the support policy knowledge base."
-
-    if intent_result.intent == "product_recommendation":
-        return "I can help recommend products. The next step is to search the product catalog with your preferences."
-
-    if intent_result.intent in ["complaint", "human_escalation"]:
-        return "I am sorry this has been frustrating. The next step is to create a support ticket for a human agent."
-
-    if intent_result.intent == "unsafe_private_request":
-        return "I cannot help with requests for another customer's private information."
-
-    return "I can help with customer support questions. Please share an order, product, policy, or issue."
-
-
 def _result(
     intent: Intent,
     confidence: float,
