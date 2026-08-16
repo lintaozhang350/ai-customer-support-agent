@@ -11,6 +11,7 @@ A full-stack starter project for an AI customer support agent using React, FastA
 - Mock order and product data
 - Order lookup API
 - Product search API
+- Rule-based intent classification API
 - No RAG, vector database, tool calling, or agent workflow implemented yet
 
 ## Project Structure
@@ -84,8 +85,14 @@ Product search:
 GET http://localhost:8000/api/products/search?category=keyboard&budget=50
 ```
 
+Chat intent classification:
+
+```text
+POST http://localhost:8000/api/chat
+Body: {"message": "Where is my order 1001?", "user_id": 1}
+```
+
 ## Next Steps
 
-- Day 3: Add intent classification
 - Day 4: Add simple backend tools for order and product lookup
 - Day 5+: Add policy search and RAG

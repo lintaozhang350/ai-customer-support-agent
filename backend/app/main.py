@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import orders, products
+from app.api import chat, orders, products
 
 app = FastAPI(title="AI Customer Support Agent API")
 
@@ -15,6 +15,7 @@ app.add_middleware(
 
 app.include_router(orders.router, prefix="/api")
 app.include_router(products.router, prefix="/api")
+app.include_router(chat.router, prefix="/api")
 
 
 @app.get("/")
