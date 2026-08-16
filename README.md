@@ -99,6 +99,35 @@ npm run backend:dev
 npm run frontend:dev
 ```
 
+## Deploying a public demo
+
+The easiest path for this repo is:
+
+- deploy the backend to Render
+- deploy the frontend to Render Static Site or Vercel
+
+This repo now includes a `render.yaml` file for a simple Render setup with:
+
+- a FastAPI web service
+- a static frontend
+- a persistent disk for the SQLite file
+
+If you use Render:
+
+1. Connect the GitHub repo
+2. Create services from `render.yaml`
+3. Confirm the frontend URL and backend URL
+4. If Render gives you a different subdomain than the one in `render.yaml`, update:
+   - `VITE_API_BASE_URL`
+   - `CORS_ORIGINS`
+
+The backend uses `SUPPORT_DB_PATH=/var/data/support.db` in Render so the SQLite file stays on the attached disk.
+
+If you use Vercel for the frontend instead:
+
+- set `VITE_API_BASE_URL` to your deployed backend URL
+- set backend `CORS_ORIGINS` to include your Vercel domain
+
 ## Useful test prompts
 
 - `Where is my order 1001?`

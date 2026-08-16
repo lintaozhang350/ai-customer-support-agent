@@ -43,6 +43,10 @@ type ChatMessage = {
   metadata?: ChatApiResponse;
 };
 
+const apiBaseUrl =
+  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ??
+  'http://127.0.0.1:8000';
+
 const defaultConversationId = 'frontend-demo';
 const defaultWelcomeMessage: ChatMessage = {
   id: 'welcome',
@@ -91,7 +95,7 @@ export default function ChatWindow() {
     async function loadChatHistory() {
       try {
         const response = await fetch(
-          `http://127.0.0.1:8000/api/chat/history/${conversationId}`,
+          `${apiBaseUrl}/api/chat/history/${conversationId}`,
         );
 
         if (!response.ok) {
@@ -116,7 +120,7 @@ export default function ChatWindow() {
 
     async function loadConversations() {
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/chat/conversations');
+        const response = await fetch(`${apiBaseUrl}/api/chat/conversations`);
         if (!response.ok || !isActive) {
           return;
         }
@@ -154,7 +158,7 @@ export default function ChatWindow() {
     setIsSending(true);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/chat', {
+      const response = await fetch(`${apiBaseUrl}/api/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
