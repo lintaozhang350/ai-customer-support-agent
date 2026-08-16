@@ -45,6 +45,9 @@ def classify_message(message: str) -> IntentResult:
     if _contains_any(normalized, ["shipping", "delivery", "ship", "arrive"]):
         return _result("shipping_policy", 0.82, entities, "search_policy")
 
+    if _contains_any(normalized, ["warranty", "defect", "manufacturer", "water damage"]):
+        return _result("warranty_policy", 0.82, entities, "search_policy")
+
     if _contains_any(normalized, ["recommend", "suggest", "looking for", "need a", "cheap", "budget"]):
         return _result("product_recommendation", 0.84, entities, "search_products")
 

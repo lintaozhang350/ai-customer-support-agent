@@ -34,8 +34,8 @@ def handle_chat(request: ChatRequest) -> ChatResponse:
             tool_result={"refused": True},
         )
 
-    if intent_result.intent in ["return_policy", "shipping_policy"]:
-        policy_type = "return" if intent_result.intent == "return_policy" else "shipping"
+    if intent_result.intent in ["return_policy", "shipping_policy", "warranty_policy"]:
+        policy_type = intent_result.intent.replace("_policy", "")
         policy_chunks = search_policy(request.message, policy_type=policy_type)
         if policy_chunks:
             return ChatResponse(
@@ -132,6 +132,9 @@ def _format_product_answer(products: list[Product]) -> str:
     return f"I found {len(products)} matching product(s): {product_summary}."
 
 
-def _format_policy_answer(policy_chunks: list[dict[str, str | int]]) -> str:
+def _format_policy_answer(policy_chunks: list[dict[str, str | float]]) -> str:
     top_chunk = policy_chunks[0]
-    return f"Based on the {top_chunk['policy'].replace('_', ' ')}, {top_chunk['text']}"
+    policy_name = str(top_chunk["policy"]).replace("_", " ")
+    source = top_chunk["source"]
+    text = top_chunk["text"]
+    return f"Based on the {policy_name} ({source}), {text}"

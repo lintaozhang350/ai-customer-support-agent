@@ -13,7 +13,7 @@ A full-stack starter project for an AI customer support agent using React, FastA
 - Product search API
 - Rule-based intent classification API
 - Basic tool execution for order lookup and product search inside `/api/chat`
-- Simple keyword policy search for return and shipping questions
+- Local policy retrieval for return, shipping, and warranty questions
 - No vector database, LLM tool calling, or advanced agent workflow implemented yet
 
 ## Project Structure
@@ -96,7 +96,7 @@ Body: {"message": "Where is my order 1001?", "user_id": 1}
 ```
 
 For order and product questions, `/api/chat` now calls the matching mock-data tool and includes `tool_used` plus `tool_result` in the response.
-For return and shipping questions, `/api/chat` searches local policy text files in `backend/knowledge_base`.
+For return, shipping, and warranty questions, `/api/chat` retrieves relevant chunks from local policy text files in `backend/knowledge_base` and includes source metadata in `tool_result`.
 
 ## Next Steps
 

@@ -7,6 +7,7 @@ Intent = Literal[
     "order_status",
     "return_policy",
     "shipping_policy",
+    "warranty_policy",
     "product_recommendation",
     "complaint",
     "human_escalation",
