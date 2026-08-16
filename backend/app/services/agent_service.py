@@ -3,6 +3,7 @@ from app.schemas.order import Order
 from app.schemas.product import Product
 from app.schemas.ticket import SupportTicketCreate
 from app.services.intent_classifier import classify_message
+from app.services.llm_classifier import classify_message_with_llm
 from app.services.mock_data import get_order_by_id, search_products
 from app.services.policy_search import search_policy
 from app.services.ticket_service import create_support_ticket
@@ -12,7 +13,10 @@ def handle_chat(
     request: ChatRequest,
     conversation_history: list[ChatHistoryMessage] | None = None,
 ) -> ChatResponse:
-    intent_result = classify_message(request.message)
+    intent_result = classify_message_with_llm(
+        request.message,
+        conversation_history=conversation_history,
+    ) or classify_message(request.message)
     intent_result = _apply_conversation_context(
         request.message,
         intent_result,

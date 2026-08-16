@@ -12,6 +12,7 @@ This is still an MVP. It does not use a real LLM, vector database, authenticatio
 - Chat UI connected to the backend `/api/chat` endpoint
 - Chat history restored from SQLite when the frontend reloads
 - Follow-up questions can reuse recent conversation context for order and product requests
+- Optional LLM classifier layer with automatic fallback to rule-based routing
 - Customer-facing result cards for orders, products, policies, and support tickets
 - Recent order shortcuts and common help topics
 - Order lookup for seeded sample orders
@@ -173,6 +174,21 @@ python -m pytest
 
 The backend test suite covers health checks, order lookup, product search, chat tool routing, follow-up context handling, chat history persistence, policy retrieval, support ticket creation, privacy refusal, and core intent classification.
 
+## Optional LLM Classifier
+
+The backend can optionally try an OpenAI Responses API classifier before falling back to the local rule-based classifier.
+
+Environment variables:
+
+```text
+ENABLE_LLM_CLASSIFIER=true
+OPENAI_API_KEY=your_api_key
+OPENAI_MODEL=gpt-5.6
+OPENAI_BASE_URL=https://api.openai.com/v1
+```
+
+If `ENABLE_LLM_CLASSIFIER` is not enabled, or if the API key is missing, or if the remote call fails, the backend automatically falls back to the existing local classifier.
+
 ## Local Data
 
 Orders, products, support tickets, and chat history are stored in a local SQLite database:
@@ -185,7 +201,7 @@ The `backend/data/` folder is ignored by Git so local runtime data is not commit
 
 ## Current Limitations
 
-- No real LLM integration yet
+- No production-ready LLM workflow yet
 - No vector RAG yet
 - No production database yet
 - Orders and products are still sample seeded data

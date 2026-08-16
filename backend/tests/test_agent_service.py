@@ -1,4 +1,7 @@
+from datetime import datetime
+
 from app.schemas.chat import ChatHistoryMessage, ChatRequest
+from app.services import agent_service
 from app.services.agent_service import handle_chat
 from app.services.intent_classifier import classify_message
 
@@ -75,6 +78,45 @@ def test_handle_chat_uses_conversation_context_for_product_follow_up() -> None:
 
     response = handle_chat(
         ChatRequest(message="Anything cheaper?"),
+        conversation_history=history,
+    )
+
+    assert response.intent_result.intent == "product_recommendation"
+    assert response.intent_result.entities.category == "keyboard"
+    assert response.tool_used == "search_products"
+
+
+def test_handle_chat_falls_back_when_llm_classifier_returns_none(monkeypatch) -> None:
+    monkeypatch.setattr(agent_service, "classify_message_with_llm", lambda *_args, **_kwargs: None)
+
+    response = handle_chat(ChatRequest(message="Where is my order 1001?"))
+
+    assert response.intent_result.intent == "order_status"
+    assert response.tool_used == "get_order_status"
+
+
+def test_handle_chat_uses_llm_classifier_when_available(monkeypatch) -> None:
+    llm_result = classify_message("Recommend a budget keyboard under $50")
+    history = [
+        ChatHistoryMessage(
+            id=1,
+            conversation_id="demo",
+            user_id=1,
+            role="customer",
+            text="I need a keyboard",
+            metadata=None,
+            created_at=datetime(2026, 8, 16, 17, 0, 0),
+        )
+    ]
+
+    monkeypatch.setattr(
+        agent_service,
+        "classify_message_with_llm",
+        lambda *_args, **_kwargs: llm_result,
+    )
+
+    response = handle_chat(
+        ChatRequest(message="Anything under $50?"),
         conversation_history=history,
     )
 
