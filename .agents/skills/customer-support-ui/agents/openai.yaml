@@ -1,0 +1,4 @@
+interface:
+  display_name: "Customer Support UI"
+  short_description: "Polish ecommerce support interfaces"
+  default_prompt: "Audit and improve the ShopDesk customer-service UI while preserving behavior."
