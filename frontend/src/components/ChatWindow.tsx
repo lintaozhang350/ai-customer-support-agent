@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 
 type ChatRole = 'customer' | 'agent';
 
@@ -43,6 +43,13 @@ type ChatMessage = {
   metadata?: ChatApiResponse;
 };
 
+export type SupportUiAction = {
+  id: string;
+  type: 'scroll' | 'focus-composer' | 'prefill-input' | 'send-prompt';
+  targetId?: string;
+  prompt?: string;
+};
+
 const apiBaseUrl =
   (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ??
   'http://127.0.0.1:8000';
@@ -81,13 +88,14 @@ const demoPrompts = [
   },
 ];
 
-export default function ChatWindow() {
+export default function ChatWindow({ uiAction }: { uiAction: SupportUiAction | null }) {
   const [messages, setMessages] = useState<ChatMessage[]>([defaultWelcomeMessage]);
   const [conversationId, setConversationId] = useState(defaultConversationId);
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const composerRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     let isActive = true;
@@ -139,6 +147,39 @@ export default function ChatWindow() {
       isActive = false;
     };
   }, [conversationId]);
+
+  useEffect(() => {
+    if (!uiAction) {
+      return;
+    }
+
+    if (uiAction.targetId) {
+      const target = document.getElementById(uiAction.targetId);
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    if (uiAction.type === 'focus-composer') {
+      window.setTimeout(() => {
+        composerRef.current?.focus();
+      }, 150);
+      return;
+    }
+
+    if (uiAction.type === 'prefill-input' && uiAction.prompt) {
+      setInput(uiAction.prompt);
+      window.setTimeout(() => {
+        composerRef.current?.focus();
+        composerRef.current?.setSelectionRange(uiAction.prompt!.length, uiAction.prompt!.length);
+      }, 150);
+      return;
+    }
+
+    if (uiAction.type === 'send-prompt' && uiAction.prompt) {
+      void sendMessage(uiAction.prompt);
+    }
+  }, [uiAction]);
 
   async function sendMessage(messageText: string) {
     const trimmedMessage = messageText.trim();
@@ -281,6 +322,7 @@ export default function ChatWindow() {
 
         <form className="flex gap-3 border-t border-slate-200 bg-[#f7fafa] p-4" onSubmit={handleSubmit}>
           <input
+            ref={composerRef}
             className="min-w-0 flex-1 rounded-sm border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-100 disabled:cursor-not-allowed disabled:bg-slate-100"
             placeholder="Ask about an order, return, warranty, or product"
             value={input}
@@ -392,6 +434,32 @@ export default function ChatWindow() {
           <p className="mt-2 text-slate-600">
             Include an order number when reporting delivery, return, or warranty issues.
           </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              className="rounded-sm border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 hover:border-slate-400 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isSending}
+              type="button"
+              onClick={() => {
+                const helperText = 'I need help with order 1001';
+                setInput(helperText);
+                document.getElementById('support-chat')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                window.setTimeout(() => {
+                  composerRef.current?.focus();
+                  composerRef.current?.setSelectionRange(helperText.length, helperText.length);
+                }, 150);
+              }}
+            >
+              Use order 1001
+            </button>
+            <button
+              className="rounded-sm border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 hover:border-slate-400 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isSending}
+              type="button"
+              onClick={() => void sendMessage('Where is my order 1001?')}
+            >
+              Track latest order
+            </button>
+          </div>
         </div>
       </aside>
     </section>
