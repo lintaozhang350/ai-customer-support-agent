@@ -1,9 +1,11 @@
 from app.schemas.chat import ChatRequest, ChatResponse, IntentResult
 from app.schemas.order import Order
 from app.schemas.product import Product
+from app.schemas.ticket import SupportTicketCreate
 from app.services.intent_classifier import classify_message
 from app.services.mock_data import get_order_by_id, search_products
 from app.services.policy_search import search_policy
+from app.services.ticket_service import create_support_ticket
 
 
 def handle_chat(request: ChatRequest) -> ChatResponse:
@@ -16,15 +18,7 @@ def handle_chat(request: ChatRequest) -> ChatResponse:
         return _handle_product_recommendation(intent_result)
 
     if intent_result.intent in ["complaint", "human_escalation"]:
-        return ChatResponse(
-            answer="I am sorry this has been frustrating. I can create a support ticket for a human agent in the next step.",
-            intent_result=intent_result,
-            tool_used="create_support_ticket",
-            tool_result={
-                "status": "not_implemented",
-                "reason": "Ticket creation will be added in a later step.",
-            },
-        )
+        return _handle_escalation(request, intent_result)
 
     if intent_result.intent == "unsafe_private_request":
         return ChatResponse(
@@ -105,6 +99,27 @@ def _handle_product_recommendation(intent_result: IntentResult) -> ChatResponse:
         intent_result=intent_result,
         tool_used="search_products",
         tool_result=[product.model_dump(mode="json") for product in products],
+    )
+
+
+def _handle_escalation(
+    request: ChatRequest,
+    intent_result: IntentResult,
+) -> ChatResponse:
+    ticket = create_support_ticket(
+        SupportTicketCreate(
+            user_id=request.user_id,
+            order_id=intent_result.entities.order_id,
+            issue_type=intent_result.intent,
+            summary=request.message,
+        )
+    )
+
+    return ChatResponse(
+        answer=f"I am sorry this has been frustrating. I created support ticket #{ticket.id}, and a human agent can follow up from there.",
+        intent_result=intent_result,
+        tool_used="create_support_ticket",
+        tool_result=ticket.model_dump(mode="json"),
     )
 
 

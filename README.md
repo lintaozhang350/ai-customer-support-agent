@@ -14,6 +14,7 @@ A full-stack starter project for an AI customer support agent using React, FastA
 - Rule-based intent classification API
 - Basic tool execution for order lookup and product search inside `/api/chat`
 - Local policy retrieval for return, shipping, and warranty questions
+- Support ticket creation for complaints and human escalation
 - No vector database, LLM tool calling, or advanced agent workflow implemented yet
 
 ## Project Structure
@@ -97,9 +98,16 @@ Body: {"message": "Where is my order 1001?", "user_id": 1}
 
 For order and product questions, `/api/chat` now calls the matching mock-data tool and includes `tool_used` plus `tool_result` in the response.
 For return, shipping, and warranty questions, `/api/chat` retrieves relevant chunks from local policy text files in `backend/knowledge_base` and includes source metadata in `tool_result`.
+For complaints and human escalation requests, `/api/chat` creates an in-memory support ticket.
+
+Support tickets:
+
+```text
+GET http://localhost:8000/api/tickets
+POST http://localhost:8000/api/tickets
+```
 
 ## Next Steps
 
 - Replace keyword policy search with vector RAG
-- Add support ticket creation
 - Connect the frontend chat input to `/api/chat`
