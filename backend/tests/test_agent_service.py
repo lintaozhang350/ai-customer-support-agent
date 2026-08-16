@@ -88,6 +88,11 @@ def test_handle_chat_uses_conversation_context_for_product_follow_up() -> None:
 
 def test_handle_chat_falls_back_when_llm_classifier_returns_none(monkeypatch) -> None:
     monkeypatch.setattr(agent_service, "classify_message_with_llm", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        agent_service,
+        "generate_answer_with_llm",
+        lambda *_args, **_kwargs: None,
+    )
 
     response = handle_chat(ChatRequest(message="Where is my order 1001?"))
 
@@ -114,6 +119,11 @@ def test_handle_chat_uses_llm_classifier_when_available(monkeypatch) -> None:
         "classify_message_with_llm",
         lambda *_args, **_kwargs: llm_result,
     )
+    monkeypatch.setattr(
+        agent_service,
+        "generate_answer_with_llm",
+        lambda *_args, **_kwargs: None,
+    )
 
     response = handle_chat(
         ChatRequest(message="Anything under $50?"),
@@ -123,3 +133,18 @@ def test_handle_chat_uses_llm_classifier_when_available(monkeypatch) -> None:
     assert response.intent_result.intent == "product_recommendation"
     assert response.intent_result.entities.category == "keyboard"
     assert response.tool_used == "search_products"
+
+
+def test_handle_chat_uses_llm_answer_generation_when_available(monkeypatch) -> None:
+    monkeypatch.setattr(agent_service, "classify_message_with_llm", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        agent_service,
+        "generate_answer_with_llm",
+        lambda *_args, **_kwargs: "Your package is already on the way and should arrive on August 20, 2026.",
+    )
+
+    response = handle_chat(ChatRequest(message="Where is my order 1001?"))
+
+    assert response.intent_result.intent == "order_status"
+    assert response.tool_used == "get_order_status"
+    assert response.answer == "Your package is already on the way and should arrive on August 20, 2026."

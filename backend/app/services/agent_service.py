@@ -2,6 +2,7 @@ from app.schemas.chat import ChatHistoryMessage, ChatRequest, ChatResponse, Inte
 from app.schemas.order import Order
 from app.schemas.product import Product
 from app.schemas.ticket import SupportTicketCreate
+from app.services.llm_answer_generator import generate_answer_with_llm
 from app.services.intent_classifier import classify_message
 from app.services.llm_classifier import classify_message_with_llm
 from app.services.mock_data import get_order_by_id, search_products
@@ -13,55 +14,63 @@ def handle_chat(
     request: ChatRequest,
     conversation_history: list[ChatHistoryMessage] | None = None,
 ) -> ChatResponse:
+    history = conversation_history or []
     intent_result = classify_message_with_llm(
         request.message,
-        conversation_history=conversation_history,
+        conversation_history=history,
     ) or classify_message(request.message)
     intent_result = _apply_conversation_context(
         request.message,
         intent_result,
-        conversation_history or [],
+        history,
     )
 
     if intent_result.intent == "order_status":
-        return _handle_order_status(intent_result)
+        response = _handle_order_status(intent_result)
+        return _finalize_response(request.message, response, history)
 
     if intent_result.intent == "product_recommendation":
-        return _handle_product_recommendation(intent_result)
+        response = _handle_product_recommendation(intent_result)
+        return _finalize_response(request.message, response, history)
 
     if intent_result.intent in ["complaint", "human_escalation"]:
-        return _handle_escalation(request, intent_result)
+        response = _handle_escalation(request, intent_result)
+        return _finalize_response(request.message, response, history)
 
     if intent_result.intent == "unsafe_private_request":
-        return ChatResponse(
+        response = ChatResponse(
             answer="I cannot help with requests for another customer's private information.",
             intent_result=intent_result,
             tool_used="refuse_request",
             tool_result={"refused": True},
         )
+        return _finalize_response(request.message, response, history)
 
     if intent_result.intent in ["return_policy", "shipping_policy", "warranty_policy"]:
         policy_type = intent_result.intent.replace("_policy", "")
         policy_chunks = search_policy(request.message, policy_type=policy_type)
         if policy_chunks:
-            return ChatResponse(
+            response = ChatResponse(
                 answer=_format_policy_answer(policy_chunks),
                 intent_result=intent_result,
                 tool_used="search_policy",
                 tool_result=policy_chunks,
             )
+            return _finalize_response(request.message, response, history)
 
-        return ChatResponse(
+        response = ChatResponse(
             answer="I could not find a matching policy section for that question.",
             intent_result=intent_result,
             tool_used="search_policy",
             tool_result=[],
         )
+        return _finalize_response(request.message, response, history)
 
-    return ChatResponse(
+    response = ChatResponse(
         answer="I can help with customer support questions. Please share an order, product, policy, or issue.",
         intent_result=intent_result,
     )
+    return _finalize_response(request.message, response, history)
 
 
 def _handle_order_status(intent_result: IntentResult) -> ChatResponse:
@@ -235,3 +244,23 @@ def _looks_like_order_follow_up(normalized_message: str) -> bool:
     )
 
     return has_reference and has_tracking_language
+
+
+def _finalize_response(
+    user_message: str,
+    response: ChatResponse,
+    conversation_history: list[ChatHistoryMessage],
+) -> ChatResponse:
+    rewritten_answer = generate_answer_with_llm(
+        user_message=user_message,
+        default_answer=response.answer,
+        intent_result=response.intent_result,
+        tool_used=response.tool_used,
+        tool_result=response.tool_result,
+        conversation_history=conversation_history,
+    )
+
+    if not rewritten_answer:
+        return response
+
+    return response.model_copy(update={"answer": rewritten_answer})

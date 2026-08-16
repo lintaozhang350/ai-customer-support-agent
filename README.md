@@ -13,6 +13,7 @@ This is still an MVP. It does not use a real LLM, vector database, authenticatio
 - Chat history restored from SQLite when the frontend reloads
 - Follow-up questions can reuse recent conversation context for order and product requests
 - Optional LLM classifier layer with automatic fallback to rule-based routing
+- Optional LLM answer generation layer with automatic fallback to local replies
 - Customer-facing result cards for orders, products, policies, and support tickets
 - Recent order shortcuts and common help topics
 - Order lookup for seeded sample orders
@@ -191,12 +192,13 @@ Environment variables:
 
 ```text
 ENABLE_LLM_CLASSIFIER=true
+ENABLE_LLM_ANSWER_GENERATION=true
 OPENAI_API_KEY=your_api_key
 OPENAI_MODEL=gpt-5.6
 OPENAI_BASE_URL=https://api.openai.com/v1
 ```
 
-If `ENABLE_LLM_CLASSIFIER` is not enabled, or if the API key is missing, or if the remote call fails, the backend automatically falls back to the existing local classifier.
+If the optional LLM classifier or answer generation settings are not enabled, if the API key is missing, or if the remote call fails, the backend automatically falls back to the existing local logic.
 
 ## Local Data
 
