@@ -3,6 +3,7 @@ from app.schemas.order import Order
 from app.schemas.product import Product
 from app.services.intent_classifier import classify_message
 from app.services.mock_data import get_order_by_id, search_products
+from app.services.policy_search import search_policy
 
 
 def handle_chat(request: ChatRequest) -> ChatResponse:
@@ -34,14 +35,21 @@ def handle_chat(request: ChatRequest) -> ChatResponse:
         )
 
     if intent_result.intent in ["return_policy", "shipping_policy"]:
+        policy_type = "return" if intent_result.intent == "return_policy" else "shipping"
+        policy_chunks = search_policy(request.message, policy_type=policy_type)
+        if policy_chunks:
+            return ChatResponse(
+                answer=_format_policy_answer(policy_chunks),
+                intent_result=intent_result,
+                tool_used="search_policy",
+                tool_result=policy_chunks,
+            )
+
         return ChatResponse(
-            answer="I can help with that policy question. Policy search is not connected yet, so this will be handled when RAG is added.",
+            answer="I could not find a matching policy section for that question.",
             intent_result=intent_result,
             tool_used="search_policy",
-            tool_result={
-                "status": "not_implemented",
-                "reason": "Policy RAG is intentionally not part of Day 4.",
-            },
+            tool_result=[],
         )
 
     return ChatResponse(
@@ -122,3 +130,8 @@ def _format_product_answer(products: list[Product]) -> str:
         f"{product.name} (${product.price:.2f})" for product in top_products
     )
     return f"I found {len(products)} matching product(s): {product_summary}."
+
+
+def _format_policy_answer(policy_chunks: list[dict[str, str | int]]) -> str:
+    top_chunk = policy_chunks[0]
+    return f"Based on the {top_chunk['policy'].replace('_', ' ')}, {top_chunk['text']}"
