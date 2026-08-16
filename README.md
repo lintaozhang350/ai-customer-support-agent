@@ -2,7 +2,7 @@
 
 A full-stack AI customer support agent MVP for an ecommerce-style help center.
 
-The project currently includes a React + TypeScript + Tailwind frontend, a FastAPI backend, mock ecommerce data, rule-based intent detection, local policy retrieval, simple tool execution, and a SQLite-backed support ticket workflow.
+The project currently includes a React + TypeScript + Tailwind frontend, a FastAPI backend, mock ecommerce data, rule-based intent detection, local policy retrieval, simple tool execution, SQLite-backed chat history, and a SQLite-backed support ticket workflow.
 
 This is still an MVP. It does not use a real LLM, vector database, authentication system, production database, or production deployment yet.
 
@@ -10,6 +10,7 @@ This is still an MVP. It does not use a real LLM, vector database, authenticatio
 
 - ShopDesk-style customer service frontend
 - Chat UI connected to the backend `/api/chat` endpoint
+- Chat history restored from SQLite when the frontend reloads
 - Customer-facing result cards for orders, products, policies, and support tickets
 - Recent order shortcuts and common help topics
 - Order lookup for mock orders
@@ -24,7 +25,7 @@ This is still an MVP. It does not use a real LLM, vector database, authenticatio
 
 - Frontend: React, TypeScript, Vite, Tailwind CSS
 - Backend: FastAPI, Pydantic, Uvicorn
-- Data: In-memory mock ecommerce data, local text policy files, and SQLite support tickets
+- Data: In-memory mock ecommerce data, local text policy files, SQLite chat history, and SQLite support tickets
 - Agent logic: Rule-based intent classifier plus local tool routing
 
 ## Project Structure
@@ -132,7 +133,13 @@ Chat request:
 
 ```text
 POST http://127.0.0.1:8000/api/chat
-Body: {"message": "Where is my order 1001?", "user_id": 1}
+Body: {"message": "Where is my order 1001?", "user_id": 1, "conversation_id": "frontend-demo"}
+```
+
+Chat history:
+
+```text
+GET http://127.0.0.1:8000/api/chat/history/frontend-demo
 ```
 
 Frontend examples to try:
@@ -161,11 +168,11 @@ pip install -r requirements-dev.txt
 python -m pytest
 ```
 
-The backend test suite covers health checks, order lookup, product search, chat tool routing, policy retrieval, support ticket creation, privacy refusal, and core intent classification.
+The backend test suite covers health checks, order lookup, product search, chat tool routing, chat history persistence, policy retrieval, support ticket creation, privacy refusal, and core intent classification.
 
 ## Local Data
 
-Support tickets are stored in a local SQLite database:
+Support tickets and chat history are stored in a local SQLite database:
 
 ```text
 backend/data/support.db

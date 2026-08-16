@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 
 type ChatRole = 'customer' | 'agent';
 
@@ -21,12 +21,21 @@ type ChatApiResponse = {
   tool_result: unknown;
 };
 
+type ChatHistoryMessage = {
+  id: number;
+  role: ChatRole;
+  text: string;
+  metadata: ChatApiResponse | null;
+};
+
 type ChatMessage = {
   id: string;
   role: ChatRole;
   text: string;
   metadata?: ChatApiResponse;
 };
+
+const conversationId = 'frontend-demo';
 
 const demoPrompts = [
   {
@@ -67,6 +76,44 @@ export default function ChatWindow() {
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadChatHistory() {
+      try {
+        const response = await fetch(
+          `http://127.0.0.1:8000/api/chat/history/${conversationId}`,
+        );
+
+        if (!response.ok) {
+          return;
+        }
+
+        const history = (await response.json()) as ChatHistoryMessage[];
+        if (!isActive || history.length === 0) {
+          return;
+        }
+
+        setMessages(
+          history.map((historyMessage) => ({
+            id: `history-${historyMessage.id}`,
+            role: historyMessage.role,
+            text: historyMessage.text,
+            metadata: historyMessage.metadata ?? undefined,
+          })),
+        );
+      } catch (requestError) {
+        console.error(requestError);
+      }
+    }
+
+    void loadChatHistory();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
   async function sendMessage(messageText: string) {
     const trimmedMessage = messageText.trim();
     if (!trimmedMessage || isSending) {
@@ -93,7 +140,7 @@ export default function ChatWindow() {
         body: JSON.stringify({
           message: trimmedMessage,
           user_id: 1,
-          conversation_id: 'frontend-demo',
+          conversation_id: conversationId,
         }),
       });
 

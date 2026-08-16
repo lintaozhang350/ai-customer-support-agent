@@ -1,4 +1,5 @@
 from typing import Any, Literal
+from datetime import datetime
 
 from pydantic import BaseModel, Field
 
@@ -41,3 +42,13 @@ class ChatResponse(BaseModel):
     intent_result: IntentResult
     tool_used: str | None = None
     tool_result: dict[str, Any] | list[dict[str, Any]] | None = None
+
+
+class ChatHistoryMessage(BaseModel):
+    id: int
+    conversation_id: str
+    user_id: int | None = None
+    role: Literal["customer", "agent"]
+    text: str
+    metadata: dict[str, Any] | None = None
+    created_at: datetime

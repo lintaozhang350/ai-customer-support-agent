@@ -39,7 +39,11 @@ def test_product_search_filters_by_category_and_budget(client: TestClient) -> No
 def test_chat_order_status_uses_order_tool(client: TestClient) -> None:
     response = client.post(
         "/api/chat",
-        json={"message": "Where is my order 1001?", "user_id": 1},
+        json={
+            "message": "Where is my order 1001?",
+            "user_id": 1,
+            "conversation_id": "test-conversation",
+        },
     )
 
     assert response.status_code == 200
@@ -47,6 +51,29 @@ def test_chat_order_status_uses_order_tool(client: TestClient) -> None:
     assert data["intent_result"]["intent"] == "order_status"
     assert data["tool_used"] == "get_order_status"
     assert data["tool_result"]["id"] == 1001
+
+
+def test_chat_history_returns_saved_exchange(client: TestClient) -> None:
+    chat_response = client.post(
+        "/api/chat",
+        json={
+            "message": "Where is my order 1001?",
+            "user_id": 1,
+            "conversation_id": "history-test",
+        },
+    )
+
+    assert chat_response.status_code == 200
+
+    history_response = client.get("/api/chat/history/history-test")
+
+    assert history_response.status_code == 200
+    history = history_response.json()
+    assert len(history) == 2
+    assert history[0]["role"] == "customer"
+    assert history[0]["text"] == "Where is my order 1001?"
+    assert history[1]["role"] == "agent"
+    assert history[1]["metadata"]["tool_used"] == "get_order_status"
 
 
 def test_chat_product_recommendation_uses_product_tool(client: TestClient) -> None:
